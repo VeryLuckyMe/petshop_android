@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -60,13 +61,13 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
 
-    /* Temporarily disabled for restricted network
+    // Supabase
     implementation(libs.supabase.postgrest)
-    implementation(libs.supabase.gotrue)
+    implementation(libs.supabase.auth)
     implementation(libs.supabase.storage)
+    implementation(libs.coil.compose)
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.core)
-    */
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
