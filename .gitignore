@@ -1,0 +1,36 @@
+# Project-wide Gradle settings
+.gradle
+/build
+/local.properties
+
+# Android Studio / IntelliJ
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/modules/
+.idea/kotlin-js-store.xml
+*.iml
+
+# App-specific build outputs
+app/build/
+*.apk
+*.aar
+*.ap_
+
+# Kotlin/JVM
+.kotlin/
+*.class
+
+# Log files
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Secrets
+local.properties
+.env
