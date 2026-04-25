@@ -1,6 +1,5 @@
-package com.example.zootopia.screens
+package com.example.zootopia.feature.dashboard
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,41 +12,30 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.zootopia.ui.theme.BrandDark
-import com.example.zootopia.ui.theme.BrandMedium
-import com.example.zootopia.ui.theme.ZootopiaPrimary
-
-data class ServiceItem(val title: String, val description: String, val icon: ImageVector)
-data class ProductItem(val name: String, val price: String, val category: String, val isHot: Boolean = false)
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.zootopia.core.theme.BrandDark
+import com.example.zootopia.core.theme.BrandMedium
+import com.example.zootopia.core.theme.ZootopiaPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(onNavigateToProfile: () -> Unit, onLogout: () -> Unit) {
-    val services = listOf(
-        ServiceItem("Pet Grooming", "Full-service spa treatments and hygiene care.", Icons.Default.ContentCut),
-        ServiceItem("Health Checkups", "Routine wellness exams and vaccinations.", Icons.Default.MedicalServices),
-        ServiceItem("Gourmet Treats", "Organic and nutritionist-approved snacks.", Icons.Default.Restaurant)
-    )
-
-    val products = listOf(
-        ProductItem("Organic Chicken Bites", "$14.99", "Nutrition", true),
-        ProductItem("Rubber Bone", "$9.50", "Toys"),
-        ProductItem("Dream Cloud Bed", "$45.00", "Bedding"),
-        ProductItem("Water Fountain", "$29.99", "Accessories")
-    )
+fun DashboardActivity(
+    onNavigateToProfile: () -> Unit,
+    onLogout: () -> Unit,
+    presenter: DashboardPresenter = viewModel()
+) {
+    val state by presenter.state.collectAsState()
 
     Scaffold(
         topBar = {
@@ -199,7 +187,7 @@ fun DashboardScreen(onNavigateToProfile: () -> Unit, onLogout: () -> Unit) {
             }
 
             // Services List
-            items(services) { service ->
+            items(state.services) { service ->
                 Surface(
                     modifier = Modifier
                         .padding(horizontal = 16.dp, vertical = 6.dp)
@@ -246,7 +234,7 @@ fun DashboardScreen(onNavigateToProfile: () -> Unit, onLogout: () -> Unit) {
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(products) { product ->
+                    items(state.products) { product ->
                         ProductCard(product)
                     }
                 }
@@ -257,7 +245,7 @@ fun DashboardScreen(onNavigateToProfile: () -> Unit, onLogout: () -> Unit) {
 }
 
 @Composable
-fun ProductCard(product: ProductItem) {
+fun ProductCard(product: DashboardContract.ProductItem) {
     Card(
         modifier = Modifier.width(160.dp),
         shape = RoundedCornerShape(12.dp),

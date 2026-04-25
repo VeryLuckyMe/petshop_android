@@ -1,4 +1,4 @@
-package com.example.zootopia.ui.theme
+package com.example.zootopia.core.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

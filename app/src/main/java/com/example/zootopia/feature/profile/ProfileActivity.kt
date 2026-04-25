@@ -1,4 +1,4 @@
-package com.example.zootopia.screens
+package com.example.zootopia.feature.profile
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -23,54 +23,29 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.zootopia.SupabaseManager
-import com.example.zootopia.UserProfile
-import com.example.zootopia.ui.theme.BrandDark
-import com.example.zootopia.ui.theme.ZootopiaPrimary
-import io.github.jan.supabase.gotrue.auth
-import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.storage.storage
-import kotlinx.coroutines.launch
+import com.example.zootopia.core.theme.BrandDark
+import com.example.zootopia.core.theme.ZootopiaPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onBack: () -> Unit) {
-    val scope = rememberCoroutineScope()
-    var profile by remember { mutableStateOf<UserProfile?>(null) }
-    var isEditing by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(true) }
-    
-    // Editable States
-    var username by remember { mutableStateOf("") }
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    
+fun ProfileActivity(
+    onBack: () -> Unit,
+    presenter: ProfilePresenter = viewModel()
+) {
+    val state by presenter.state.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Initial Fetch
-    LaunchedEffect(Unit) {
-        try {
-            val user = SupabaseManager.client.auth.currentUserOrNull()
-            if (user != null) {
-                val fetchedProfile = SupabaseManager.client.postgrest["zootopiaDatabase"]
-                    .select {
-                        filter {
-                            eq("email", user.email ?: "")
-                        }
-                    }
-                    .decodeSingle<UserProfile>()
-                
-                profile = fetchedProfile
-                username = fetchedProfile.username ?: ""
-                firstName = fetchedProfile.firstName ?: ""
-                lastName = fetchedProfile.lastName ?: ""
-            }
-        } catch (e: Exception) {
-            snackbarHostState.showSnackbar("Error fetching profile: ${e.message}")
-        } finally {
-            isLoading = false
+    LaunchedEffect(state.error, state.successMessage) {
+        state.error?.let {
+            snackbarHostState.showSnackbar(it)
+            presenter.clearMessages()
+        }
+        state.successMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            presenter.clearMessages()
         }
     }
 
@@ -79,48 +54,13 @@ fun ProfileScreen(onBack: () -> Unit) {
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            scope.launch {
-                try {
-                    val bytes = context.contentResolver.openInputStream(it)?.readBytes()
-                    if (bytes != null) {
-                        val fileName = "avatar_${System.currentTimeMillis()}.jpg"
-                        val bucket = SupabaseManager.client.storage.from("avatars")
-                        
-                        bucket.upload(fileName, bytes, upsert = true)
-                        val publicUrl = bucket.publicUrl(fileName)
-                        
-                        SupabaseManager.client.postgrest["zootopiaDatabase"].update({
-                            set("avatar_url", publicUrl)
-                        }) {
-                            filter { eq("email", profile?.email ?: "") }
-                        }
-                        
-                        profile = profile?.copy(avatarUrl = publicUrl)
-                        snackbarHostState.showSnackbar("Photo updated!")
-                    }
-                } catch (e: Exception) {
-                    snackbarHostState.showSnackbar("Upload failed: ${e.message}")
-                }
-            }
-        }
-    }
-
-    fun handleSave() {
-        scope.launch {
             try {
-                SupabaseManager.client.postgrest["zootopiaDatabase"].update({
-                    set("username", username)
-                    set("first_name", firstName)
-                    set("last_name", lastName)
-                }) {
-                    filter { eq("email", profile?.email ?: "") }
+                val bytes = context.contentResolver.openInputStream(it)?.readBytes()
+                if (bytes != null) {
+                    presenter.uploadAvatar(bytes)
                 }
-                
-                profile = profile?.copy(username = username, firstName = firstName, lastName = lastName)
-                isEditing = false
-                snackbarHostState.showSnackbar("Profile updated!")
             } catch (e: Exception) {
-                snackbarHostState.showSnackbar("Save failed: ${e.message}")
+                // Handled internally by presenter if needed, or ignored here
             }
         }
     }
@@ -136,12 +76,12 @@ fun ProfileScreen(onBack: () -> Unit) {
                     }
                 },
                 actions = {
-                    if (isEditing) {
-                        IconButton(onClick = { handleSave() }) {
+                    if (state.isEditing) {
+                        IconButton(onClick = { presenter.saveProfile() }) {
                             Icon(Icons.Default.Check, contentDescription = "Save", tint = ZootopiaPrimary)
                         }
                     } else {
-                        IconButton(onClick = { isEditing = true }) {
+                        IconButton(onClick = { presenter.setEditing(true) }) {
                             Icon(Icons.Default.Edit, contentDescription = "Edit")
                         }
                     }
@@ -149,8 +89,8 @@ fun ProfileScreen(onBack: () -> Unit) {
             )
         }
     ) { padding ->
-        if (isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (state.isLoading) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = ZootopiaPrimary)
             }
         } else {
@@ -182,9 +122,9 @@ fun ProfileScreen(onBack: () -> Unit) {
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(Color.White.copy(alpha = 0.3f))
                         ) {
-                            if (profile?.avatarUrl != null) {
+                            if (state.profile?.avatarUrl != null) {
                                 AsyncImage(
-                                    model = profile?.avatarUrl,
+                                    model = state.profile?.avatarUrl,
                                     contentDescription = null,
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
@@ -192,7 +132,7 @@ fun ProfileScreen(onBack: () -> Unit) {
                             } else {
                                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                     Text(
-                                        text = (profile?.firstName?.take(1) ?: "U").uppercase(),
+                                        text = (state.profile?.firstName?.take(1) ?: "U").uppercase(),
                                         fontSize = 32.sp,
                                         color = Color.White,
                                         fontWeight = FontWeight.Black
@@ -214,8 +154,8 @@ fun ProfileScreen(onBack: () -> Unit) {
                         Spacer(modifier = Modifier.width(16.dp))
                         
                         Column {
-                            Text("${profile?.firstName ?: ""} ${profile?.lastName ?: ""}", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black)
-                            Text("@${profile?.username ?: ""}", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
+                            Text("${state.profile?.firstName ?: ""} ${state.profile?.lastName ?: ""}", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black)
+                            Text("@${state.profile?.username ?: ""}", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp)
                         }
                     }
                 }
@@ -228,33 +168,33 @@ fun ProfileScreen(onBack: () -> Unit) {
                         .background(Color.White)
                         .padding(16.dp)
                 ) {
-                    if (isEditing) {
+                    if (state.isEditing) {
                         OutlinedTextField(
-                            value = username,
-                            onValueChange = { username = it },
+                            value = state.editUsername,
+                            onValueChange = { presenter.updateForm(it, state.editFirstName, state.editLastName) },
                             label = { Text("Username") },
                             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                             shape = RoundedCornerShape(12.dp)
                         )
                         OutlinedTextField(
-                            value = firstName,
-                            onValueChange = { firstName = it },
+                            value = state.editFirstName,
+                            onValueChange = { presenter.updateForm(state.editUsername, it, state.editLastName) },
                             label = { Text("First Name") },
                             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                             shape = RoundedCornerShape(12.dp)
                         )
                         OutlinedTextField(
-                            value = lastName,
-                            onValueChange = { lastName = it },
+                            value = state.editLastName,
+                            onValueChange = { presenter.updateForm(state.editUsername, state.editFirstName, it) },
                             label = { Text("Last Name") },
                             modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                             shape = RoundedCornerShape(12.dp)
                         )
                     } else {
-                        ProfileDetailRow(Icons.Default.Badge, "Username", profile?.username ?: "")
-                        ProfileDetailRow(Icons.Default.Email, "Email", profile?.email ?: "")
-                        ProfileDetailRow(Icons.Default.Person, "First Name", profile?.firstName ?: "")
-                        ProfileDetailRow(Icons.Default.Person, "Last Name", profile?.lastName ?: "")
+                        ProfileDetailRow(Icons.Default.Badge, "Username", state.profile?.username ?: "")
+                        ProfileDetailRow(Icons.Default.Email, "Email", state.profile?.email ?: "")
+                        ProfileDetailRow(Icons.Default.Person, "First Name", state.profile?.firstName ?: "")
+                        ProfileDetailRow(Icons.Default.Person, "Last Name", state.profile?.lastName ?: "")
                     }
                 }
             }

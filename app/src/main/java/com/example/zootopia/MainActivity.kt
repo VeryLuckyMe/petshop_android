@@ -11,10 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.zootopia.ui.theme.AndroidstuTheme
-import com.example.zootopia.screens.AuthScreen
-import com.example.zootopia.screens.DashboardScreen
-import com.example.zootopia.screens.ProfileScreen
+import com.example.zootopia.core.theme.AndroidstuTheme
+import com.example.zootopia.feature.auth.LoginActivity
+import com.example.zootopia.feature.auth.RegisterActivity
+import com.example.zootopia.feature.auth.SplashActivity
+import com.example.zootopia.feature.dashboard.DashboardActivity
+import com.example.zootopia.feature.profile.ProfileActivity
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,18 +38,34 @@ class MainActivity : ComponentActivity() {
 fun PetshopApp() {
     val navController = rememberNavController()
     
-    NavHost(navController = navController, startDestination = "auth") {
-        composable("auth") { 
-            AuthScreen(onLoginSuccess = { navController.navigate("dashboard") }) 
+    NavHost(navController = navController, startDestination = "splash") {
+        composable("splash") {
+            SplashActivity(onSplashComplete = {
+                navController.navigate("login") {
+                    popUpTo("splash") { inclusive = true }
+                }
+            })
+        }
+        composable("login") { 
+            LoginActivity(
+                onLoginSuccess = { navController.navigate("dashboard") },
+                onNavigateToRegister = { navController.navigate("register") }
+            ) 
+        }
+        composable("register") {
+            RegisterActivity(
+                onRegisterSuccess = { navController.navigate("login") },
+                onNavigateToLogin = { navController.navigate("login") }
+            )
         }
         composable("dashboard") { 
-            DashboardScreen(
+            DashboardActivity(
                 onNavigateToProfile = { navController.navigate("profile") },
-                onLogout = { navController.navigate("auth") }
+                onLogout = { navController.navigate("login") }
             ) 
         }
         composable("profile") { 
-            ProfileScreen(onBack = { navController.popBackStack() }) 
+            ProfileActivity(onBack = { navController.popBackStack() }) 
         }
     }
 }
