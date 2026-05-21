@@ -1,5 +1,6 @@
 package com.example.zootopia.feature.dashboard
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,7 +17,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -50,196 +53,210 @@ fun DashboardActivity(
                             modifier = Modifier.size(32.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(Icons.Default.Pets, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Default.Pets, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                             }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Zootopia", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("Zootopia", color = BrandDark, fontWeight = FontWeight.Black, fontSize = 20.sp)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = BrandDark),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White.copy(alpha = 0.8f) // Glassmorphic translucent white
+                ),
                 actions = {
                     IconButton(onClick = onNavigateToProfile) {
-                        Icon(Icons.Default.Person, contentDescription = "Profile", tint = Color.White)
+                        Icon(Icons.Default.Person, contentDescription = "Profile", tint = BrandDark)
                     }
                     IconButton(onClick = onLogout) {
-                        Icon(Icons.Default.Logout, contentDescription = "Logout", tint = Color.White)
+                        Icon(Icons.Default.Logout, contentDescription = "Logout", tint = BrandDark)
                     }
                 }
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-                .background(Color(0xFFF8F6F6))
-        ) {
-            // Header Search Bar
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(BrandDark)
-                        .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
-                ) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().height(44.dp),
-                        color = BrandMedium.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 12.dp)
-                        ) {
-                            Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.6f))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Search care plans...", color = Color.White.copy(alpha = 0.6f), fontSize = 14.sp)
-                        }
-                    }
-                }
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .background(Color(0xFFF8F6F6))
+            ) {
+                PawBounceLoader()
             }
-
-            // Hero Section
-            item {
-                Card(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = BrandMedium)
-                ) {
-                    Column {
-                        // Beautiful animal care banner illustration using Coil's AsyncImage
-                        AsyncImage(
-                            model = "https://lh3.googleusercontent.com/aida-public/AB6AXuCUPoBMX5MvwaJAoNc00Mnz7afdACyxkZirovqMACle-wFCrExOO1KwDXmsly8S_ehuuQDOacjLl_AERyXVREi6zGTgTmqqNcM7sIZ9lqfnx2_Hh70RV1xqqMjRZz8ha1z0nDoeZ7Lu7VP3iBQSyZTYvTLXWb2NBa4oA96LAyuuyUTQim-Sjy4WV7j580KP7Y2RDlI586KAkQSfuMzjbKwn1paeivX9LXLsifL2bS0HZZ3bouu7eJ1KfgAgwmUQemuW6WknJXxQ17E",
-                            contentDescription = "Pet Care Banner",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(160.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                        
-                        Column(modifier = Modifier.padding(20.dp)) {
-                            Text(
-                                text = buildAnnotatedString {
-                                    append("Your Pet's Happiness, \n")
-                                    withStyle(style = SpanStyle(color = ZootopiaPrimary)) {
-                                        append("Our Priority")
-                                    }
-                                },
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Black,
-                                color = Color.White,
-                                lineHeight = 32.sp
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                "Professional care tailored to your pet's unique needs.",
-                                color = Color.White.copy(alpha = 0.8f),
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp
-                            )
-                            Spacer(modifier = Modifier.height(20.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Button(
-                                    onClick = { },
-                                    colors = ButtonDefaults.buttonColors(containerColor = ZootopiaPrimary),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.height(44.dp)
-                                ) {
-                                    Text("Book Now", fontWeight = FontWeight.Bold)
-                                }
-                                OutlinedButton(
-                                    onClick = { },
-                                    border = androidx.compose.foundation.BorderStroke(2.dp, Color.White),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.height(44.dp)
-                                ) {
-                                    Text("Our Story", color = Color.White, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Services Title
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Text(
-                        "Our Premium Services",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Black,
-                        color = BrandDark
-                    )
-                    Text(
-                        "View All",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = ZootopiaPrimary
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            // Services List
-            items(state.services) { service ->
-                Surface(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    color = Color.White,
-                    shadowElevation = 1.dp
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .background(Color(0xFFF8F6F6))
+            ) {
+                // Header Search Bar
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White.copy(alpha = 0.8f))
+                            .padding(bottom = 16.dp, start = 16.dp, end = 16.dp)
                     ) {
                         Surface(
-                            color = ZootopiaPrimary.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.size(48.dp)
+                            modifier = Modifier.fillMaxWidth().height(44.dp),
+                            color = Color(0xFFF1F5F9),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(service.icon, contentDescription = null, tint = ZootopiaPrimary)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 12.dp)
+                            ) {
+                                Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Search care plans...", color = Color.Gray, fontSize = 14.sp)
                             }
                         }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(service.title, fontWeight = FontWeight.Bold, color = BrandDark, fontSize = 16.sp)
-                            Text(service.description, fontSize = 12.sp, color = Color.Gray)
-                        }
-                        Icon(Icons.Default.ArrowForwardIos, contentDescription = null, tint = ZootopiaPrimary, modifier = Modifier.size(16.dp))
                     }
                 }
-            }
 
-            // Products Section
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    "Featured Products",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Black,
-                    color = BrandDark,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(state.products) { product ->
-                        ProductCard(product)
+                // Hero Section
+                item {
+                    Card(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(containerColor = BrandMedium),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    ) {
+                        Column {
+                            // Beautiful animal care banner illustration using Coil's AsyncImage
+                            AsyncImage(
+                                model = "https://lh3.googleusercontent.com/aida-public/AB6AXuCUPoBMX5MvwaJAoNc00Mnz7afdACyxkZirovqMACle-wFCrExOO1KwDXmsly8S_ehuuQDOacjLl_AERyXVREi6zGTgTmqqNcM7sIZ9lqfnx2_Hh70RV1xqqMjRZz8ha1z0nDoeZ7Lu7VP3iBQSyZTYvTLXWb2NBa4oA96LAyuuyUTQim-Sjy4WV7j580KP7Y2RDlI586KAkQSfuMzjbKwn1paeivX9LXLsifL2bS0HZZ3bouu7eJ1KfgAgwmUQemuW6WknJXxQ17E",
+                                contentDescription = "Pet Care Banner",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(160.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                            
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Text(
+                                    text = buildAnnotatedString {
+                                        append("Your Pet's Happiness, \n")
+                                        withStyle(style = SpanStyle(color = ZootopiaPrimary)) {
+                                            append("Our Priority")
+                                        }
+                                    },
+                                    fontSize = 28.sp,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color.White,
+                                    lineHeight = 32.sp
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    "Professional care tailored to your pet's unique needs.",
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    fontSize = 14.sp,
+                                    lineHeight = 20.sp
+                                )
+                                Spacer(modifier = Modifier.height(20.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Button(
+                                        onClick = { },
+                                        colors = ButtonDefaults.buttonColors(containerColor = ZootopiaPrimary),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.height(44.dp)
+                                    ) {
+                                        Text("Book Now", fontWeight = FontWeight.Bold)
+                                    }
+                                    OutlinedButton(
+                                        onClick = { },
+                                        border = androidx.compose.foundation.BorderStroke(2.dp, Color.White),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.height(44.dp)
+                                    ) {
+                                        Text("Our Story", color = Color.White, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(32.dp))
+
+                // Services Title
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Text(
+                            "Our Premium Services",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Black,
+                            color = BrandDark
+                        )
+                        Text(
+                            "View All",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ZootopiaPrimary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                // Services List
+                items(state.services) { service ->
+                    Surface(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                            .fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color.White,
+                        shadowElevation = 3.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                color = ZootopiaPrimary.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.size(48.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(service.icon, contentDescription = null, tint = ZootopiaPrimary)
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(service.title, fontWeight = FontWeight.Bold, color = BrandDark, fontSize = 16.sp)
+                                Text(service.description, fontSize = 12.sp, color = Color.Gray)
+                            }
+                            Icon(Icons.Default.ArrowForwardIos, contentDescription = null, tint = ZootopiaPrimary, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+
+                // Products Section
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(
+                        "Featured Products",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Black,
+                        color = BrandDark,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(state.products) { product ->
+                            ProductCard(product)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(32.dp))
+                }
             }
         }
     }
@@ -249,15 +266,16 @@ fun DashboardActivity(
 fun ProductCard(product: DashboardContract.ProductItem) {
     Card(
         modifier = Modifier.width(160.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {
         Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp)
+                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                     .background(Color(0xFFEEEEEE)),
                 contentAlignment = Alignment.Center
             ) {
@@ -265,7 +283,7 @@ fun ProductCard(product: DashboardContract.ProductItem) {
                 if (product.isHot) {
                     Surface(
                         color = ZootopiaPrimary,
-                        shape = RoundedCornerShape(4.dp),
+                        shape = RoundedCornerShape(6.dp),
                         modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
                     ) {
                         Text("HOT", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
@@ -284,7 +302,7 @@ fun ProductCard(product: DashboardContract.ProductItem) {
                     Text(product.price, fontWeight = FontWeight.Black, color = BrandDark, fontSize = 16.sp)
                     Surface(
                         color = BrandDark,
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.size(28.dp).clickable { }
                     ) {
                         Box(contentAlignment = Alignment.Center) {
@@ -293,6 +311,69 @@ fun ProductCard(product: DashboardContract.ProductItem) {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun PawBounceLoader() {
+    val infiniteTransition = rememberInfiniteTransition(label = "paw_bounce")
+    
+    // Scale animation
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "scale"
+    )
+    
+    // Bounce animation
+    val translateY by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -16f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "translate"
+    )
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Surface(
+                modifier = Modifier
+                    .size(80.dp)
+                    .graphicsLayer {
+                        translationY = translateY.dp.toPx()
+                        scaleX = scale
+                        scaleY = scale
+                    },
+                shape = CircleShape,
+                color = BrandMedium,
+                shadowElevation = 8.dp
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Pets,
+                        contentDescription = "Loading...",
+                        tint = Color.White,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Preparing Your Pet Care Experience...",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = BrandDark
+            )
         }
     }
 }

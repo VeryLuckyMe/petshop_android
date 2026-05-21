@@ -1,11 +1,18 @@
 package com.example.zootopia.feature.auth
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,21 +35,56 @@ fun ZootopiaTextField(
     icon: ImageVector?,
     isPassword: Boolean = false
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+
+    // Smooth focus animation spec
+    val lineColor by animateColorAsState(
+        targetValue = if (isFocused) BrandMedium else Color(0xFFE2E8F0),
+        animationSpec = tween(durationMillis = 250)
+    )
+    val lineThickness by animateDpAsState(
+        targetValue = if (isFocused) 2.5.dp else 1.dp,
+        animationSpec = tween(durationMillis = 250)
+    )
+
     Column(modifier = modifier) {
-        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandDark, modifier = Modifier.padding(bottom = 6.dp))
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = { Text(label, color = Color.LightGray) },
-            leadingIcon = if (icon != null) { { Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = BrandMedium) } } else null,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            visualTransformation = if (isPassword) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                unfocusedBorderColor = Color(0xFFE2E8F0),
-                focusedBorderColor = BrandMedium
-            )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = BrandDark,
+            modifier = Modifier.padding(bottom = 6.dp)
         )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFFF8FAFC))
+        ) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                placeholder = { Text(label, color = Color.LightGray, fontSize = 14.sp) },
+                leadingIcon = if (icon != null) { { Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp), tint = BrandMedium) } } else null,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                visualTransformation = if (isPassword) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+                interactionSource = interactionSource,
+                colors = TextFieldDefaults.outlinedTextFieldColors(
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = Color.Transparent
+                )
+            )
+            // Premium focus expanding bottom line
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(lineThickness)
+                    .background(lineColor)
+            )
+        }
     }
 }
 
