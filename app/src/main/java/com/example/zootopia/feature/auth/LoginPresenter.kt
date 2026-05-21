@@ -26,7 +26,7 @@ class LoginPresenter : ViewModel(), LoginContract.Presenter {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
                 NetworkUtils.client.auth.signInWith(Email) {
-                    this.email = email
+                    this.email = email.trim()
                     this.password = pass
                 }
                 _state.update { it.copy(isLoading = false, isSuccess = true) }

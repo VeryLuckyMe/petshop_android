@@ -24,6 +24,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 import com.example.zootopia.core.theme.BrandDark
 import com.example.zootopia.core.theme.BrandMedium
 import com.example.zootopia.core.theme.ZootopiaPrimary
@@ -108,16 +110,15 @@ fun DashboardActivity(
                     colors = CardDefaults.cardColors(containerColor = BrandMedium)
                 ) {
                     Column {
-                        // Place for an image - using a generic placeholder box for now
-                        Box(
+                        // Beautiful animal care banner illustration using Coil's AsyncImage
+                        AsyncImage(
+                            model = "https://lh3.googleusercontent.com/aida-public/AB6AXuCUPoBMX5MvwaJAoNc00Mnz7afdACyxkZirovqMACle-wFCrExOO1KwDXmsly8S_ehuuQDOacjLl_AERyXVREi6zGTgTmqqNcM7sIZ9lqfnx2_Hh70RV1xqqMjRZz8ha1z0nDoeZ7Lu7VP3iBQSyZTYvTLXWb2NBa4oA96LAyuuyUTQim-Sjy4WV7j580KP7Y2RDlI586KAkQSfuMzjbKwn1paeivX9LXLsifL2bS0HZZ3bouu7eJ1KfgAgwmUQemuW6WknJXxQ17E",
+                            contentDescription = "Pet Care Banner",
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(160.dp)
-                                .background(BrandDark.copy(alpha = 0.3f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Image, contentDescription = null, tint = Color.White.copy(alpha = 0.2f), modifier = Modifier.size(64.dp))
-                        }
+                                .height(160.dp),
+                            contentScale = ContentScale.Crop
+                        )
                         
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(

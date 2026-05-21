@@ -19,7 +19,12 @@ class RegisterPresenter : ViewModel(), RegisterContract.Presenter {
     override val state: StateFlow<RegisterContract.State> = _state.asStateFlow()
 
     override fun signUp(email: String, pass: String, firstName: String, lastName: String, username: String) {
-        if (email.isBlank() || pass.isBlank() || firstName.isBlank() || lastName.isBlank() || username.isBlank()) {
+        val trimmedEmail = email.trim()
+        val trimmedUsername = username.trim()
+        val trimmedFirstName = firstName.trim()
+        val trimmedLastName = lastName.trim()
+
+        if (trimmedEmail.isBlank() || pass.isBlank() || trimmedFirstName.isBlank() || trimmedLastName.isBlank() || trimmedUsername.isBlank()) {
             _state.update { it.copy(error = "All fields are required") }
             return
         }
@@ -28,15 +33,15 @@ class RegisterPresenter : ViewModel(), RegisterContract.Presenter {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
                 NetworkUtils.client.auth.signUpWith(Email) {
-                    this.email = email
+                    this.email = trimmedEmail
                     this.password = pass
                 }
 
                 val profile = UserProfile(
-                    username = username,
-                    firstName = firstName,
-                    lastName = lastName,
-                    email = email,
+                    username = trimmedUsername,
+                    firstName = trimmedFirstName,
+                    lastName = trimmedLastName,
+                    email = trimmedEmail,
                     role = "user"
                 )
                 

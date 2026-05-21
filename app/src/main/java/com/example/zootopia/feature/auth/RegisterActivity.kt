@@ -20,18 +20,26 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.zootopia.core.theme.BrandDark
 
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
+
 @Composable
 fun RegisterActivity(
     onRegisterSuccess: () -> Unit,
     onNavigateToLogin: () -> Unit,
     presenter: RegisterPresenter = viewModel()
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
     var emailInput by remember { mutableStateOf("") }
     var passwordInput by remember { mutableStateOf("") }
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var agreeToTerms by remember { mutableStateOf(false) }
 
     val state by presenter.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -42,6 +50,7 @@ fun RegisterActivity(
             presenter.clearError()
         }
         if (state.isSuccess) {
+            Toast.makeText(context, "Success! Check your email to verify and log in.", Toast.LENGTH_LONG).show()
             onRegisterSuccess()
         }
     }
@@ -91,14 +100,42 @@ fun RegisterActivity(
                     ZootopiaTextField(Modifier.weight(1f), confirmPassword, { value -> confirmPassword = value }, "Confirm Password", Icons.Default.History, isPassword = true)
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Terms of Service and Privacy Policy checkbox
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { agreeToTerms = !agreeToTerms },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(
+                        checked = agreeToTerms,
+                        onCheckedChange = { agreeToTerms = it },
+                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFF005696))
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "I agree to the Terms of Service and Privacy Policy",
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Button(
                     onClick = { 
-                        if (passwordInput == confirmPassword) {
-                            presenter.signUp(emailInput, passwordInput, firstName, lastName, username)
+                        if (!agreeToTerms) {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("You must agree to the Terms of Service and Privacy Policy.")
+                            }
+                        } else if (passwordInput != confirmPassword) {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Passwords do not match!")
+                            }
                         } else {
-                            // Local error handling
+                            presenter.signUp(emailInput, passwordInput, firstName, lastName, username)
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
