@@ -49,7 +49,8 @@ class ProductDetailPresenter : ViewModel(), ProductDetailContract.Presenter {
 
                 val enrichedState = getEnrichedState(fetchedProduct).copy(
                     isWishlisted = isWish,
-                    isLoading = false
+                    isLoading = false,
+                    isLoggedIn = (user != null)
                 )
                 
                 _state.update { enrichedState }

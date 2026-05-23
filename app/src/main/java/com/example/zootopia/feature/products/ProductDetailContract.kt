@@ -33,7 +33,8 @@ interface ProductDetailContract {
         val isReviewsLoading: Boolean = false,
         val isSubmittingReview: Boolean = false,
         val newReviewRating: Int = 5,
-        val newReviewComment: String = ""
+        val newReviewComment: String = "",
+        val isLoggedIn: Boolean = false
     )
 
     interface Presenter {
