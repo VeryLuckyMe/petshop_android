@@ -49,6 +49,11 @@ fun ProductsActivity(
         }
     }
 
+    // Refresh products dynamically whenever this tab becomes active
+    LaunchedEffect(Unit) {
+        presenter.loadProducts()
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
