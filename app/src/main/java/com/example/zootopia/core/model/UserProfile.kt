@@ -12,5 +12,6 @@ data class UserProfile(
     @SerialName("email") val email: String? = "",
     @SerialName("role") val role: String? = "user",
     @SerialName("avatar_url") val avatarUrl: String? = null,
-    @SerialName("created_at") val createdAt: String? = null
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("loyalty_points") val loyaltyPoints: Int = 0
 )

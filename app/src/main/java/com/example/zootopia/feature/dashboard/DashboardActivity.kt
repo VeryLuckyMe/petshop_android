@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
+import com.example.zootopia.core.model.Product
 import com.example.zootopia.core.theme.BrandDark
 import com.example.zootopia.core.theme.BrandMedium
 import com.example.zootopia.core.theme.ZootopiaPrimary
@@ -38,6 +39,7 @@ import com.example.zootopia.core.theme.ZootopiaPrimary
 fun DashboardActivity(
     onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit,
+    onProductClick: (Long) -> Unit = {},
     presenter: DashboardPresenter = viewModel()
 ) {
     val state by presenter.state.collectAsState()
@@ -252,7 +254,11 @@ fun DashboardActivity(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(state.products) { product ->
-                            ProductCard(product)
+                            ProductCard(
+                                product = product,
+                                onAddToCart = { presenter.addToCart(product) },
+                                onClick = { product.id?.let { onProductClick(it) } }
+                            )
                         }
                     }
                     Spacer(modifier = Modifier.height(32.dp))
@@ -263,9 +269,15 @@ fun DashboardActivity(
 }
 
 @Composable
-fun ProductCard(product: DashboardContract.ProductItem) {
+fun ProductCard(
+    product: Product,
+    onAddToCart: () -> Unit,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.width(160.dp),
+        modifier = Modifier
+            .width(160.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
@@ -279,15 +291,15 @@ fun ProductCard(product: DashboardContract.ProductItem) {
                     .background(Color(0xFFEEEEEE)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Pets, contentDescription = null, tint = Color.Gray.copy(alpha = 0.3f), modifier = Modifier.size(48.dp))
-                if (product.isHot) {
-                    Surface(
-                        color = ZootopiaPrimary,
-                        shape = RoundedCornerShape(6.dp),
-                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)
-                    ) {
-                        Text("HOT", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
-                    }
+                if (!product.imageUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = product.imageUrl,
+                        contentDescription = product.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(Icons.Default.Pets, contentDescription = null, tint = Color.Gray.copy(alpha = 0.3f), modifier = Modifier.size(48.dp))
                 }
             }
             Column(modifier = Modifier.padding(12.dp)) {
@@ -299,11 +311,11 @@ fun ProductCard(product: DashboardContract.ProductItem) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(product.price, fontWeight = FontWeight.Black, color = BrandDark, fontSize = 16.sp)
+                    Text("₱${String.format("%.2f", product.price)}", fontWeight = FontWeight.Black, color = BrandDark, fontSize = 15.sp)
                     Surface(
                         color = BrandDark,
                         shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.size(28.dp).clickable { }
+                        modifier = Modifier.size(28.dp).clickable { onAddToCart() }
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(Icons.Default.AddShoppingCart, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
