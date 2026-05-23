@@ -467,45 +467,171 @@ fun ProductDetailActivity(
                                         }
                                     }
                                     2 -> {
-                                        // Product reviews mock list matching star count
                                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                            // 1. Stats and Header
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 modifier = Modifier.fillMaxWidth(),
                                                 horizontalArrangement = Arrangement.SpaceBetween
                                             ) {
-                                                Text("Customer Feedback", fontWeight = FontWeight.Bold, color = BrandDark, fontSize = 14.sp)
+                                                Text("Customer Reviews (${state.reviewsCount})", fontWeight = FontWeight.Black, color = BrandDark, fontSize = 15.sp)
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                                     Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB300), modifier = Modifier.size(16.dp))
-                                                    Text("${state.rating} out of 5", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = BrandDark, modifier = Modifier.padding(start = 4.dp))
+                                                    Text(
+                                                        text = String.format("%.1f out of 5", state.rating),
+                                                        fontSize = 13.sp,
+                                                        fontWeight = FontWeight.Black,
+                                                        color = BrandDark,
+                                                        modifier = Modifier.padding(start = 4.dp)
+                                                    )
                                                 }
                                             }
 
-                                            // Render review entries
-                                            val reviewers = listOf("Marielle V.", "Dave A.", "John D.")
-                                            val ratings = listOf(5, 4, 5)
-                                            val comments = listOf(
-                                                "My pet absolutely loves this! Will definitely order again. Super fast delivery!",
-                                                "Item matches description. Shipping took a couple of days but product quality is great.",
-                                                "Highly recommended! The glass packaging was perfect and pet shop support is very responsive."
-                                            )
+                                            // 2. Write a Review Form
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                shape = RoundedCornerShape(16.dp),
+                                                colors = CardDefaults.cardColors(containerColor = Color.LightGray.copy(alpha = 0.1f)),
+                                                border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.2f))
+                                            ) {
+                                                Column(modifier = Modifier.padding(16.dp)) {
+                                                    Text(
+                                                        text = "Write a Customer Review",
+                                                        fontWeight = FontWeight.Black,
+                                                        color = BrandDark,
+                                                        fontSize = 13.sp,
+                                                        modifier = Modifier.padding(bottom = 8.dp)
+                                                    )
 
-                                            reviewers.forEachIndexed { i, reviewer ->
-                                                Column(modifier = Modifier.fillMaxWidth()) {
+                                                    // Stars selection Row
                                                     Row(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        modifier = Modifier.padding(bottom = 12.dp)
                                                     ) {
-                                                        Text(reviewer, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BrandDark)
-                                                        Row {
-                                                            repeat(ratings[i]) {
-                                                                Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB300), modifier = Modifier.size(12.dp))
-                                                            }
+                                                        Text("Rating: ", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BrandMedium)
+                                                        Spacer(modifier = Modifier.width(4.dp))
+                                                        repeat(5) { i ->
+                                                            val ratingVal = i + 1
+                                                            Icon(
+                                                                imageVector = Icons.Default.Star,
+                                                                contentDescription = null,
+                                                                tint = if (state.newReviewRating >= ratingVal) Color(0xFFFFB300) else Color.LightGray.copy(alpha = 0.5f),
+                                                                modifier = Modifier
+                                                                    .size(24.dp)
+                                                                    .clickable { presenter.setReviewRating(ratingVal) }
+                                                                    .padding(horizontal = 2.dp)
+                                                            )
                                                         }
                                                     }
-                                                    Spacer(modifier = Modifier.height(4.dp))
-                                                    Text(comments[i], fontSize = 12.sp, color = Color.DarkGray, lineHeight = 16.sp)
-                                                    Divider(modifier = Modifier.padding(top = 12.dp), color = Color.LightGray.copy(alpha = 0.2f))
+
+                                                    // Comment OutlinedTextField
+                                                    OutlinedTextField(
+                                                        value = state.newReviewComment,
+                                                        onValueChange = { presenter.setReviewComment(it) },
+                                                        placeholder = { Text("Share your thoughts about this product...", fontSize = 13.sp) },
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .height(90.dp),
+                                                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
+                                                        colors = OutlinedTextFieldDefaults.colors(
+                                                            focusedBorderColor = ZootopiaPrimary,
+                                                            unfocusedBorderColor = Color.LightGray.copy(alpha = 0.5f)
+                                                        ),
+                                                        shape = RoundedCornerShape(12.dp)
+                                                    )
+
+                                                    Spacer(modifier = Modifier.height(12.dp))
+
+                                                    // Submit Button
+                                                    Button(
+                                                        onClick = { presenter.submitReview() },
+                                                        enabled = !state.isSubmittingReview && state.newReviewComment.isNotBlank(),
+                                                        colors = ButtonDefaults.buttonColors(containerColor = ZootopiaPrimary),
+                                                        modifier = Modifier
+                                                            .align(Alignment.End)
+                                                            .height(36.dp),
+                                                        shape = RoundedCornerShape(18.dp),
+                                                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                                                    ) {
+                                                        if (state.isSubmittingReview) {
+                                                            CircularProgressIndicator(
+                                                                modifier = Modifier.size(16.dp),
+                                                                color = Color.White,
+                                                                strokeWidth = 2.dp
+                                                            )
+                                                        } else {
+                                                            Text("Submit Review", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 12.sp)
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+
+                                            // 3. Reviews list
+                                            if (state.isReviewsLoading) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(24.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    CircularProgressIndicator(color = ZootopiaPrimary, modifier = Modifier.size(24.dp))
+                                                }
+                                            } else if (state.reviewsList.isEmpty()) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(24.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        text = "No reviews yet. Be the first to leave a review!",
+                                                        fontSize = 12.sp,
+                                                        color = Color.Gray,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                            } else {
+                                                state.reviewsList.forEach { review ->
+                                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                                        Row(
+                                                            modifier = Modifier.fillMaxWidth(),
+                                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                                            verticalAlignment = Alignment.CenterVertically
+                                                        ) {
+                                                            Column {
+                                                                Text(review.username, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = BrandDark)
+                                                                Text(
+                                                                    text = "Verified Purchase",
+                                                                    fontSize = 9.sp,
+                                                                    fontWeight = FontWeight.Bold,
+                                                                    color = Color(0xFF1E7035)
+                                                                )
+                                                            }
+                                                            Row {
+                                                                repeat(5) { i ->
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.Star,
+                                                                        contentDescription = null,
+                                                                        tint = if (review.rating > i) Color(0xFFFFB300) else Color.LightGray.copy(alpha = 0.4f),
+                                                                        modifier = Modifier.size(12.dp)
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                        Spacer(modifier = Modifier.height(6.dp))
+                                                        Text(
+                                                            text = review.comment,
+                                                            fontSize = 12.sp,
+                                                            color = BrandDark.copy(alpha = 0.8f),
+                                                            lineHeight = 16.sp
+                                                        )
+                                                        Divider(
+                                                            modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
+                                                            color = Color.LightGray.copy(alpha = 0.2f)
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }

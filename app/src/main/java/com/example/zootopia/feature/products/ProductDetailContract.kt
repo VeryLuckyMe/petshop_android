@@ -1,6 +1,7 @@
 package com.example.zootopia.feature.products
 
 import com.example.zootopia.core.model.Product
+import com.example.zootopia.core.model.Review
 import kotlinx.coroutines.flow.StateFlow
 
 interface ProductDetailContract {
@@ -25,7 +26,14 @@ interface ProductDetailContract {
         val isWishlisted: Boolean = false,
         val isLoading: Boolean = false,
         val error: String? = null,
-        val successMessage: String? = null
+        val successMessage: String? = null,
+        
+        // Reviews dynamic updates
+        val reviewsList: List<Review> = emptyList(),
+        val isReviewsLoading: Boolean = false,
+        val isSubmittingReview: Boolean = false,
+        val newReviewRating: Int = 5,
+        val newReviewComment: String = ""
     )
 
     interface Presenter {
@@ -41,5 +49,12 @@ interface ProductDetailContract {
         fun addToCart()
         fun clearError()
         fun clearSuccessMessage()
+        
+        // Reviews dynamic interactions
+        fun loadReviews()
+        fun setReviewRating(rating: Int)
+        fun setReviewComment(comment: String)
+        fun submitReview()
     }
 }
+

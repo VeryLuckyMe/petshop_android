@@ -53,6 +53,7 @@ class ProductDetailPresenter : ViewModel(), ProductDetailContract.Presenter {
                 )
                 
                 _state.update { enrichedState }
+                loadReviews()
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -141,6 +142,125 @@ class ProductDetailPresenter : ViewModel(), ProductDetailContract.Presenter {
 
     override fun clearSuccessMessage() {
         _state.update { it.copy(successMessage = null) }
+    }
+
+    override fun loadReviews() {
+        val currentProduct = _state.value.product ?: return
+        val productId = currentProduct.id?.toInt() ?: return
+        viewModelScope.launch {
+            _state.update { it.copy(isReviewsLoading = true, error = null) }
+            try {
+                val fetchedReviews = NetworkUtils.client.postgrest["reviews"]
+                    .select {
+                        filter {
+                            eq("product_id", productId)
+                        }
+                    }
+                    .decodeList<com.example.zootopia.core.model.Review>()
+
+                val sortedReviews = fetchedReviews.sortedByDescending { it.createdAt }
+
+                val avg = if (sortedReviews.isNotEmpty()) {
+                    sortedReviews.map { it.rating }.average().toFloat()
+                } else {
+                    _state.value.rating
+                }
+
+                _state.update {
+                    it.copy(
+                        reviewsList = sortedReviews,
+                        rating = avg,
+                        reviewsCount = sortedReviews.size,
+                        isReviewsLoading = false
+                    )
+                }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        isReviewsLoading = false,
+                        error = "Failed to load reviews: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    override fun setReviewRating(rating: Int) {
+        _state.update { it.copy(newReviewRating = rating) }
+    }
+
+    override fun setReviewComment(comment: String) {
+        _state.update { it.copy(newReviewComment = comment) }
+    }
+
+    override fun submitReview() {
+        val currentState = _state.value
+        val product = currentState.product ?: return
+        val commentText = currentState.newReviewComment.trim()
+        if (commentText.isEmpty()) {
+            _state.update { it.copy(error = "Review comment cannot be empty.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { it.copy(isSubmittingReview = true, error = null) }
+            try {
+                val user = NetworkUtils.client.auth.currentUserOrNull()
+                if (user == null) {
+                    _state.update { it.copy(isSubmittingReview = false, error = "Please log in to leave a review.") }
+                    return@launch
+                }
+
+                var resolvedUsername = user.email?.substringBefore("@") ?: "User"
+                try {
+                    val profileMatches = NetworkUtils.client.postgrest["zootopiaDatabase"]
+                        .select {
+                            filter {
+                                eq("email", user.email ?: "")
+                            }
+                        }
+                    val profiles = profileMatches.decodeList<com.example.zootopia.core.model.UserProfile>()
+                    if (profiles.isNotEmpty()) {
+                        val prof = profiles.first()
+                        resolvedUsername = if (!prof.firstName.isNullOrEmpty() && !prof.lastName.isNullOrEmpty()) {
+                            "${prof.firstName} ${prof.lastName}"
+                        } else {
+                            prof.username?.ifEmpty { resolvedUsername } ?: resolvedUsername
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Silent fallback
+                }
+
+                val newReview = com.example.zootopia.core.model.Review(
+                    productId = product.id?.toInt() ?: 0,
+                    userEmail = user.email ?: "",
+                    username = resolvedUsername,
+                    rating = currentState.newReviewRating,
+                    comment = commentText
+                )
+
+                NetworkUtils.client.postgrest["reviews"].insert(newReview)
+
+                _state.update {
+                    it.copy(
+                        isSubmittingReview = false,
+                        newReviewComment = "",
+                        newReviewRating = 5,
+                        successMessage = "Thank you! Your review was posted successfully."
+                    )
+                }
+                
+                loadReviews()
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        isSubmittingReview = false,
+                        error = "Failed to submit review: ${e.message}"
+                    )
+                }
+            }
+        }
     }
 
     private fun getEnrichedState(product: Product): ProductDetailContract.State {

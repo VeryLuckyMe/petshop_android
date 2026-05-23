@@ -21,6 +21,10 @@ class CartPresenter : ViewModel(), CartContract.Presenter {
         loadLoyaltyPoints()
         
         viewModelScope.launch {
+            CartRepository.syncCartWithServer()
+        }
+        
+        viewModelScope.launch {
             CartRepository.items.collect { currentItems ->
                 val subtotal = currentItems.sumOf { it.product.price * it.quantity }
                 // Free shipping if subtotal > ₱1000, otherwise ₱100
